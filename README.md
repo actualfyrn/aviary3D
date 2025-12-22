@@ -3,6 +3,6 @@ An attempt at a relatively simple, lightweight, multi-platform, Rust-based 3D ga
 APIs required or used:
 wgpu
 cpal
-Rapier
+rapier3d-f64
 audionimbus
 Valve's GameNetworkingSockets (eventually)
