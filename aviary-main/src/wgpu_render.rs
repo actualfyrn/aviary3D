@@ -53,6 +53,7 @@ pub struct State {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
+    bg_color: wgpu::Color,
     is_surface_configured: bool,
     window: Arc<Window>,
 }
@@ -119,11 +120,19 @@ impl State {
             desired_maximum_frame_latency: 2,
         };
 
+        let bg_color = wgpu::Color {
+            r: 0.1,
+            g: 0.2,
+            b: 0.3,
+            a: 1.0,
+        };
+
         Ok(Self {
             surface,
             device,
             queue,
             config,
+            bg_color,
             is_surface_configured: false,
             window,
         })
@@ -141,6 +150,13 @@ impl State {
     fn handle_key(&self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
         match (code, is_pressed) {
             (KeyCode::Escape, true) => event_loop.exit(),
+            _ => {}
+        }
+    }
+
+    fn handle_cursor_move(&mut self, x: f64, y: f64) {
+        match (x, y) {
+            (0.0..=100.0, 0.0..=100.0) => self.bg_color = wgpu::Color { r:1.0, g:1.0, b:1.0, a:1.0 },
             _ => {}
         }
     }
@@ -169,12 +185,7 @@ impl State {
                     view: &view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Clear(self.bg_color),
                         store: wgpu::StoreOp::Store,
                     },
                     depth_slice: None,
@@ -258,6 +269,7 @@ impl ApplicationHandler<State> for App {
         self.state = Some(event);
     }
 
+    // WINDOW EVENT CALLBACKS HERE
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -295,6 +307,12 @@ impl ApplicationHandler<State> for App {
                     },
                 ..
             } => state.handle_key(event_loop, code, key_state.is_pressed()),
+            WindowEvent::CursorMoved {
+                position: pos,
+                ..
+            } => state.handle_cursor_move(pos.x, pos.y),
+            // Catch and ignore any remaining events that come through below.
+            // Leave this AFTER all other event handling.
             _ => {}
         }
     }
