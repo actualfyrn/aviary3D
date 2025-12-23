@@ -149,16 +149,20 @@ impl State {
 
     fn handle_key(&self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
         match (code, is_pressed) {
+            // event_loop.exit() WILL close the window. May be undesirable later.
             (KeyCode::Escape, true) => event_loop.exit(),
             _ => {}
         }
     }
 
     fn handle_cursor_move(&mut self, x: f64, y: f64) {
-        match (x, y) {
-            (0.0..=100.0, 0.0..=100.0) => self.bg_color = wgpu::Color { r:1.0, g:1.0, b:1.0, a:1.0 },
-            _ => {}
-        }
+        //match (x, y) {
+        //    (0.0..=100.0, 0.0..=100.0) => self.bg_color = wgpu::Color { r:1.0, g:1.0, b:1.0, a:1.0 },
+        //    _ => {}
+        //}
+
+        self.bg_color.r = x / self.config.width as f64;
+        self.bg_color.g = y / self.config.height as f64;
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
@@ -307,10 +311,7 @@ impl ApplicationHandler<State> for App {
                     },
                 ..
             } => state.handle_key(event_loop, code, key_state.is_pressed()),
-            WindowEvent::CursorMoved {
-                position: pos,
-                ..
-            } => state.handle_cursor_move(pos.x, pos.y),
+            WindowEvent::CursorMoved { position: pos, .. } => state.handle_cursor_move(pos.x, pos.y),
             // Catch and ignore any remaining events that come through below.
             // Leave this AFTER all other event handling.
             _ => {}
