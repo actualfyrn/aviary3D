@@ -1,4 +1,5 @@
-// SETUP GRAPHICS //
+// Using //
+
 use std::sync::Arc;
 
 use winit::{
@@ -7,6 +8,9 @@ use winit::{
 
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+
+
+// Setup App
 
 pub struct App {
     #[cfg(target_arch = "wasm32")]
@@ -47,7 +51,8 @@ pub fn run() -> anyhow::Result<()> {
 }
 
 
-// This will store the state of our game
+// State of the game
+
 pub struct State {
     surface: wgpu::Surface<'static>,
     device: wgpu::Device,
@@ -333,7 +338,9 @@ impl ApplicationHandler<State> for App {
         self.state = Some(event);
     }
 
-    // WINDOW EVENT CALLBACKS HERE
+
+    // Window event callbacks
+
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
