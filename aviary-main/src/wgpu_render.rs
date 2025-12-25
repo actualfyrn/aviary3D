@@ -1,6 +1,7 @@
 // Using //
 
 use std::sync::Arc;
+use wgpu::util::DeviceExt;
 
 use winit::{
     application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window
@@ -9,8 +10,23 @@ use winit::{
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
+// Buffer resources //
 
-// Setup App
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Vertex {
+    position: [f32; 3],
+    color: [f32; 3],
+
+}
+
+const VERTICES: &[Vertex] = &[
+    Vertex { position: [0.0, 0.5, 0.0], color: [1.0, 0.0, 0.0] },
+    Vertex { position: [-0.5, -0.5, 0.0], color: [0.0, 1.0, 0.0] },
+    Vertex { position: [0.5, -0.5, 0.0], color: [0.0, 0.0, 1.0] },
+];
+
+// Setup App //
 
 pub struct App {
     #[cfg(target_arch = "wasm32")]
@@ -51,7 +67,7 @@ pub fn run() -> anyhow::Result<()> {
 }
 
 
-// State of the game
+// State of the game //
 
 pub struct State {
     surface: wgpu::Surface<'static>,
@@ -60,6 +76,7 @@ pub struct State {
     config: wgpu::SurfaceConfiguration,
     is_surface_configured: bool,
     render_pipeline: wgpu::RenderPipeline,
+    vertex_buffer: wgpu::Buffer,
     window: Arc<Window>,
 }
 
@@ -131,6 +148,16 @@ impl State {
 
         let shader = device.create_shader_module(wgpu::include_wgsl!("shaders/default.wgsl"));
 
+        // Vertex buffer setup
+
+        let vertex_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(VERTICES),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        );
+
         // Render pipeline setup
 
         let render_pipeline_layout =
@@ -191,6 +218,7 @@ impl State {
             config,
             is_surface_configured: false,
             render_pipeline,
+            vertex_buffer,
             window,
         })
     }
