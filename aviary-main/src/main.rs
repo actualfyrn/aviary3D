@@ -7,6 +7,9 @@ mod wgpu_render;
 // mod audio_render;
 
 fn main() {
+    // Include assets in build output
+    //use include_dir::{include_dir, Dir};
+
     // Start rendering in new window, begin wait for updates and input.
     wgpu_render::run();
 }

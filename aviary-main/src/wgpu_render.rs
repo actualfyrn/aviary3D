@@ -193,22 +193,27 @@ impl State {
             desired_maximum_frame_latency: 2,
         };
 
-        use std::io::Cursor;
-        let diffuse_bytes = include_bytes!("assets/textures/example.dds");
-        //let diffuse_image = image::ImageReader::new(Cursor::new(diffuse_bytes)).with_guessed_format()?.decode()?;
-        //let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
-        //let raw_img = std::fs::File::open("assets/textures/example.dds").unwrap();
-        let decoder_buffer = Cursor::new({});
-        let mut decoder = image::codecs::dds::DdsDecoder::new(Cursor::new(diffuse_bytes)).unwrap();
-        let diffuse_image = image::ImageDecoder::read_image(decoder, diffuse_bytes);
-        let diffuse_rgba = diffuse_image.to_rgba8();
+        use std::fs::File;
 
-        use image::GenericImageView;
-        let dimensions = diffuse_image.dimensions();
+        // https://docs.rs/dds/latest/dds/
+        let file = File::open("assets/textures/example.dds").unwrap();
+        let mut decoder = dds::Decoder::new(file).unwrap();
+        // ensure the file contains a single texture
+        assert!(decoder.layout().is_texture());
+        // prepare a buffer to decode as 8-bit RGBA
+        let size = decoder.main_size();
+        let mut buf = vec![0_u8; size.pixels() as usize * 4];
+        let view = dds::ImageViewMut::new(&mut buf, size, dds::ColorFormat::RGBA_U8).unwrap();
+        let wi = view.width().clone();
+        let he = view.height().clone();
+        // decode into the buffer
+        decoder.read_surface(view).unwrap();
+
+        let diffuse_rgba = buf.clone();
 
         let texture_size = wgpu::Extent3d {
-            width: dimensions.0,
-            height: dimensions.1,
+            width: wi,
+            height: he,
             // All textures are stored as 3D, we represent our 2D texture
             // by setting depth to 1.
             depth_or_array_layers: 1,
@@ -250,8 +255,8 @@ impl State {
             // The layout of the texture
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
-                bytes_per_row: Some(4 * dimensions.0),
-                rows_per_image: Some(dimensions.1),
+                bytes_per_row: Some(4 * wi),
+                rows_per_image: Some(he),
             },
             texture_size,
         );
@@ -341,7 +346,7 @@ impl State {
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("Render Pipeline Layout"),
-            bind_group_layouts: &[&texture_bind_group_layout],
+            bind_group_layouts: &[Some(&texture_bind_group_layout).unwrap()],
             // If this value is non-zero, Features::IMMEDIATES must be enabled
             immediate_size: 0,
         });
