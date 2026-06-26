@@ -193,8 +193,14 @@ impl State {
             desired_maximum_frame_latency: 2,
         };
 
+        use std::io::Cursor;
         let diffuse_bytes = include_bytes!("assets/textures/example.dds");
-        let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
+        //let diffuse_image = image::ImageReader::new(Cursor::new(diffuse_bytes)).with_guessed_format()?.decode()?;
+        //let diffuse_image = image::load_from_memory(diffuse_bytes).unwrap();
+        //let raw_img = std::fs::File::open("assets/textures/example.dds").unwrap();
+        let decoder_buffer = Cursor::new({});
+        let mut decoder = image::codecs::dds::DdsDecoder::new(Cursor::new(diffuse_bytes)).unwrap();
+        let diffuse_image = image::ImageDecoder::read_image(decoder, diffuse_bytes);
         let diffuse_rgba = diffuse_image.to_rgba8();
 
         use image::GenericImageView;
