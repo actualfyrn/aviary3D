@@ -190,6 +190,7 @@ pub struct State {
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
+    camera_controller: controls::CameraController,
 }
 
 impl State {
@@ -319,6 +320,7 @@ impl State {
             zfar: 100.0,
         };
 
+        let camera_controller = controls::CameraController::new(0.01);
 
         let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_proj(&camera);
@@ -456,6 +458,7 @@ impl State {
             camera_uniform,
             camera_buffer,
             camera_bind_group,
+            camera_controller,
         })
     }
 
@@ -468,11 +471,11 @@ impl State {
         }
     }
 
-    fn handle_key(&self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
+    fn handle_key(&mut self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
         match (code, is_pressed) {
             // event_loop.exit() WILL close the window. May be undesirable later.
             (KeyCode::Escape, true) => event_loop.exit(),
-            _ => {}
+            _ => _ = self.camera_controller.handle_key(code, is_pressed),
         }
     }
 
@@ -545,7 +548,9 @@ impl State {
     }
 
     fn update(&mut self) {
-    // remove `todo!()`
+        self.camera_controller.update_camera(&mut self.camera);
+        self.camera_uniform.update_view_proj(&self.camera);
+        self.queue.write_buffer(&self.camera_buffer, 0, bytemuck::cast_slice(&[self.camera_uniform]));
     }
 }
 
